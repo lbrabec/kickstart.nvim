@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -665,7 +665,7 @@ require('lazy').setup({
       local servers = {
         -- clangd = {},
         -- gopls = {},
-        -- pyright = {},
+        pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -827,7 +827,7 @@ require('lazy').setup({
         -- <c-k>: Toggle signature help
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
-        preset = 'default',
+        preset = 'enter',
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -842,7 +842,7 @@ require('lazy').setup({
       completion = {
         -- By default, you may press `<c-space>` to show the documentation.
         -- Optionally, set `auto_show = true` to show the documentation after a delay.
-        documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        documentation = { auto_show = true, auto_show_delay_ms = 500 },
       },
 
       sources = {
@@ -868,25 +868,69 @@ require('lazy').setup({
     },
   },
 
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
+  -- Intelligently reopen files at your last edit position. By default git, svn, and mercurial commit messages are ignored
+  {
+    'vladdoster/remember.nvim',
     config = function()
-      ---@diagnostic disable-next-line: missing-fields
-      require('tokyonight').setup {
-        styles = {
-          comments = { italic = false }, -- Disable italics in comments
-        },
-      }
+      require 'remember'
+    end,
+  },
 
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+  {
+    'neanias/everforest-nvim',
+    init = function()
+      local everforest = require 'everforest'
+      everforest.setup {
+        background = 'hard',
+        transparent_background_level = 0,
+        italics = true,
+        disable_italic_comments = false,
+        colours_override = function(palette)
+          palette.bg0 = '#101115'
+        end,
+        on_highlights = function(hl, palette)
+          hl.CurrentWord = { bg = '#2b2a2a' }
+        end,
+      }
+      everforest.load()
+    end,
+    config = function()
+      vim.cmd.colorscheme 'everforest'
+    end,
+  },
+
+  {
+    'nvim-tree/nvim-tree.lua',
+    opts = {
+      sort_by = 'name',
+      view = {
+        width = 30,
+      },
+      renderer = {
+        group_empty = true,
+        icons = { show = { file = false } },
+      },
+      update_focused_file = {
+        enable = true,
+      },
+      git = {
+        ignore = false,
+      },
+    },
+    init = function()
+      -- disable netrw (required for the nvim-tree plugin)
+      vim.g.loaded_netrw = 1
+      vim.g.loaded_netrwPlugin = 1
+
+      function NvimTree_smart_toggle()
+        if require('nvim-tree.view').is_visible() then
+          vim.cmd 'NvimTreeClose'
+        else
+          vim.cmd 'NvimTreeFindFile'
+        end
+      end
+
+      vim.keymap.set('n', '<leader>e', NvimTree_smart_toggle, { desc = 'Toggle file [E]xplorer' })
     end,
   },
 
